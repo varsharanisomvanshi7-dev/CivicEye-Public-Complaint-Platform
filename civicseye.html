@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CivicsEye — Smart Public Complaint Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B2430;
+    --paper:#F6F5F1;
+    --paper-2:#EDEBE3;
+    --amber:#E8A33D;
+    --green:#3F7D58;
+    --red:#C0432D;
+    --steel:#6B7280;
+    --line:#D9D5C9;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--amber);color:var(--ink);}
+
+  /* ---------- Top bar ---------- */
+  header.topbar{
+    background:var(--ink);
+    color:var(--paper);
+    padding:22px 32px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:16px;
+    border-bottom:4px solid var(--amber);
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:14px;
+  }
+  .brand .mark{
+    width:40px;height:40px;
+    border-radius:50%;
+    background:var(--amber);
+    display:flex;align-items:center;justify-content:center;
+    position:relative;
+    flex-shrink:0;
+  }
+  .brand .mark::after{
+    content:'';
+    width:14px;height:14px;
+    border-radius:50%;
+    background:var(--ink);
+  }
+  .brand h1{
+    font-family:'Archivo Black',sans-serif;
+    font-size:22px;
+    letter-spacing:0.5px;
+    margin:0;
+    text-transform:uppercase;
+  }
+  .brand p{
+    margin:2px 0 0;
+    font-size:12px;
+    color:#B9BEC7;
+    font-family:'IBM Plex Mono',monospace;
+    letter-spacing:0.5px;
+  }
+  .stats{
+    display:flex;
+    gap:0;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .stat{
+    padding:0 22px;
+    border-left:1px solid #3A4454;
+    text-align:right;
+  }
+  .stat:first-child{border-left:none;}
+  .stat .num{
+    font-size:26px;
+    font-weight:600;
+    line-height:1;
+    display:block;
+  }
+  .stat .lbl{
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    color:#9AA1AD;
+  }
+
+  /* ---------- Layout ---------- */
+  main{
+    max-width:1200px;
+    margin:0 auto;
+    padding:32px;
+    display:grid;
+    grid-template-columns:380px 1fr;
+    gap:32px;
+    align-items:start;
+  }
+  @media (max-width:860px){
+    main{grid-template-columns:1fr;}
+  }
+
+  section.panel{
+    background:#fff;
+    border:1px solid var(--line);
+  }
+
+  /* ---------- Form ---------- */
+  .form-panel{padding:26px;}
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:1.5px;
+    color:var(--steel);
+    margin:0 0 6px;
+  }
+  h2.title{
+    font-family:'Barlow Condensed',sans-serif;
+    font-weight:700;
+    font-size:28px;
+    text-transform:uppercase;
+    margin:0 0 20px;
+    letter-spacing:0.3px;
+  }
+  label{
+    display:block;
+    font-size:12px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    color:var(--steel);
+    margin:16px 0 6px;
+  }
+  label:first-of-type{margin-top:0;}
+  input[type=text], textarea, select{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    background:var(--paper);
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    color:var(--ink);
+  }
+  input[type=text]:focus, textarea:focus, select:focus{
+    outline:2px solid var(--ink);
+    outline-offset:1px;
+    background:#fff;
+  }
+  textarea{resize:vertical;min-height:80px;}
+  .hint{
+    font-size:11px;
+    color:var(--steel);
+    margin-top:6px;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .triage-preview{
+    margin-top:16px;
+    padding:12px 14px;
+    background:var(--paper-2);
+    border-left:3px solid var(--amber);
+    font-size:12px;
+    display:none;
+  }
+  .triage-preview.show{display:block;}
+  .triage-preview strong{font-family:'IBM Plex Mono',monospace;}
+  button.submit{
+    margin-top:22px;
+    width:100%;
+    padding:14px;
+    background:var(--ink);
+    color:var(--paper);
+    border:none;
+    font-family:'Barlow Condensed',sans-serif;
+    font-weight:700;
+    font-size:18px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    cursor:pointer;
+    transition:background .15s ease;
+  }
+  button.submit:hover{background:#2B3646;}
+  button.submit:focus-visible{outline:2px solid var(--amber);outline-offset:2px;}
+
+  /* ---------- Ticket list ---------- */
+  .list-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:12px;
+    margin-bottom:18px;
+  }
+  .filters{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .chip{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    padding:6px 12px;
+    border:1px solid var(--line);
+    background:#fff;
+    cursor:pointer;
+    color:var(--steel);
+  }
+  .chip.active{
+    background:var(--ink);
+    color:var(--paper);
+    border-color:var(--ink);
+  }
+  .chip:focus-visible{outline:2px solid var(--amber);outline-offset:1px;}
+  input.search{
+    padding:8px 12px;
+    border:1px solid var(--line);
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    width:200px;
+    background:#fff;
+  }
+
+  .tickets{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+  .ticket{
+    position:relative;
+    background:#fff;
+    border:1px solid var(--line);
+    display:flex;
+    overflow:hidden;
+    animation:slideIn .35s ease;
+  }
+  @keyframes slideIn{
+    from{opacity:0;transform:translateY(-8px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+  .ticket .stub{
+    width:78px;
+    flex-shrink:0;
+    background:var(--paper-2);
+    border-right:2px dashed var(--line);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:10px 4px;
+    text-align:center;
+  }
+  .ticket .stub .id{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--steel);
+    writing-mode:vertical-rl;
+    text-orientation:mixed;
+    letter-spacing:1px;
+  }
+  .ticket .body{
+    padding:16px 18px;
+    flex:1;
+    min-width:0;
+  }
+  .ticket .row1{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .ticket h3{
+    font-family:'Barlow Condensed',sans-serif;
+    font-weight:600;
+    font-size:19px;
+    margin:0 0 4px;
+    text-transform:uppercase;
+  }
+  .meta{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--steel);
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+    margin-bottom:8px;
+  }
+  .desc{
+    font-size:13.5px;
+    color:#3A4454;
+    line-height:1.5;
+    margin:0 0 10px;
+  }
+  .tags{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .tag{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    padding:3px 8px;
+    border-radius:2px;
+  }
+  .tag.category{background:var(--paper-2);color:var(--ink);}
+  .tag.priority-high{background:#F6DED8;color:var(--red);}
+  .tag.priority-medium{background:#FBEBD3;color:#8A5A17;}
+  .tag.priority-low{background:#E4EEE7;color:var(--green);}
+
+  .stamp{
+    font-family:'Barlow Condensed',sans-serif;
+    font-weight:700;
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:1.5px;
+    border:2px solid;
+    padding:4px 10px;
+    transform:rotate(-4deg);
+    white-space:nowrap;
+  }
+  .stamp.open{color:var(--red);border-color:var(--red);}
+  .stamp.progress{color:var(--amber);border-color:var(--amber);}
+  .stamp.resolved{color:var(--green);border-color:var(--green);}
+
+  .advance{
+    margin-top:12px;
+    background:none;
+    border:1px solid var(--ink);
+    color:var(--ink);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    padding:7px 12px;
+    cursor:pointer;
+  }
+  .advance:hover{background:var(--ink);color:var(--paper);}
+  .advance:disabled{
+    opacity:0.35;
+    cursor:default;
+  }
+  .advance:disabled:hover{background:none;color:var(--ink);}
+
+  .empty{
+    padding:60px 20px;
+    text-align:center;
+    color:var(--steel);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+  }
+
+  footer{
+    text-align:center;
+    padding:28px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--steel);
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .ticket{animation:none;}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="mark"></div>
+    <div>
+      <h1>CivicsEye</h1>
+      <p>Smart Public Complaint Platform</p>
+    </div>
+  </div>
+  <div class="stats" id="stats">
+    <div class="stat"><span class="num" id="statTotal">0</span><span class="lbl">Filed</span></div>
+    <div class="stat"><span class="num" id="statOpen">0</span><span class="lbl">Open</span></div>
+    <div class="stat"><span class="num" id="statProgress">0</span><span class="lbl">In Progress</span></div>
+    <div class="stat"><span class="num" id="statResolved">0</span><span class="lbl">Resolved</span></div>
+  </div>
+</header>
+
+<main>
+  <section class="panel form-panel">
+    <p class="eyebrow">File a report</p>
+    <h2 class="title">Something wrong nearby?</h2>
+
+    <form id="complaintForm">
+      <label for="f-title">What's the issue</label>
+      <input type="text" id="f-title" placeholder="e.g. Streetlight out on 5th Ave" required>
+
+      <label for="f-location">Location</label>
+      <input type="text" id="f-location" placeholder="Nearest cross street or landmark" required>
+
+      <label for="f-desc">Details</label>
+      <textarea id="f-desc" placeholder="Describe what you saw, when, and anything that helps crews find it." required></textarea>
+
+      <div class="triage-preview" id="triagePreview">
+        Smart triage suggests: <strong id="triageCategory">—</strong> · priority <strong id="triagePriority">—</strong>
+      </div>
+
+      <button type="submit" class="submit">Submit report</button>
+    </form>
+  </section>
+
+  <section>
+    <div class="list-header">
+      <div class="filters" id="filters">
+        <button class="chip active" data-filter="all">All</button>
+        <button class="chip" data-filter="open">Open</button>
+        <button class="chip" data-filter="progress">In progress</button>
+        <button class="chip" data-filter="resolved">Resolved</button>
+      </div>
+      <input type="text" class="search" id="search" placeholder="Search reports…">
+    </div>
+    <div class="tickets" id="tickets"></div>
+  </section>
+</main>
+
+<footer>CIVICSEYE — DEMO INSTANCE · DATA HELD IN THIS BROWSER SESSION ONLY, NOT SAVED</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---- keyword-based "smart" triage ----
+  var CATEGORY_RULES = [
+    { category: "Roads & Potholes", words: ["pothole","road","asphalt","crack","street surface","sinkhole"] },
+    { category: "Street Lighting", words: ["streetlight","light out","lamp","dark corner","lighting"] },
+    { category: "Sanitation", words: ["trash","garbage","dump","litter","overflowing","waste","smell"] },
+    { category: "Water & Sewer", words: ["leak","water main","flood","sewer","drain","pipe"] },
+    { category: "Public Safety", words: ["broken glass","fence","hazard","fire","gas smell","exposed wire"] },
+    { category: "Parks & Trees", words: ["tree","branch","park","playground","fallen"] },
+    { category: "Noise", words: ["noise","loud","construction hours","music"] },
+    { category: "Graffiti & Vandalism", words: ["graffiti","vandal","spray paint","broken window"] }
+  ];
+  var HIGH_WORDS = ["gas smell","exposed wire","fire","flood","sinkhole","hazard","broken glass","sewer"];
+  var MED_WORDS = ["pothole","leak","streetlight","light out","dark corner","trash","overflowing"];
+
+  function triage(text){
+    var t = text.toLowerCase();
+    var category = "General";
+    for (var i=0;i<CATEGORY_RULES.length;i++){
+      var rule = CATEGORY_RULES[i];
+      for (var j=0;j<rule.words.length;j++){
+        if (t.indexOf(rule.words[j]) !== -1){ category = rule.category; break; }
+      }
+      if (category !== "General") break;
+    }
+    var priority = "low";
+    for (var k=0;k<HIGH_WORDS.length;k++){ if (t.indexOf(HIGH_WORDS[k]) !== -1){ priority = "high"; break; } }
+    if (priority === "low"){
+      for (var m=0;m<MED_WORDS.length;m++){ if (t.indexOf(MED_WORDS[m]) !== -1){ priority = "medium"; break; } }
+    }
+    return { category: category, priority: priority };
+  }
+
+  // ---- state ----
+  var nextId = 1;
+  function ticketId(){ return "CE-" + String(nextId++).padStart(4,"0"); }
+
+  var complaints = [
+    mk("Pothole opening up on Elm St", "Elm St & 3rd", "Deep pothole near the crosswalk, cars swerving to avoid it.", "open", 5),
+    mk("Streetlight been out two weeks", "Corner of Bay & Union", "Whole block is dark after sunset, feels unsafe walking home.", "progress", 3),
+    mk("Overflowing trash bins at the park", "Riverside Park, east entrance", "Bins haven't been emptied, litter spreading onto the path.", "resolved", 9),
+    mk("Water leaking from sidewalk", "42 Maple Ave", "Steady trickle coming up through a crack, been going for days.", "open", 1)
+  ];
+
+  function mk(title, location, desc, status, daysAgo){
+    var t = triage(title + " " + desc);
+    var d = new Date();
+    d.setDate(d.getDate() - daysAgo);
+    return {
+      id: ticketId(),
+      title: title,
+      location: location,
+      desc: desc,
+      category: t.category,
+      priority: t.priority,
+      status: status, // open | progress | resolved
+      date: d
+    };
+  }
+
+  var activeFilter = "all";
+  var searchTerm = "";
+
+  // ---- rendering ----
+  var ticketsEl = document.getElementById("tickets");
+  var statTotal = document.getElementById("statTotal");
+  var statOpen = document.getElementById("statOpen");
+  var statProgress = document.getElementById("statProgress");
+  var statResolved = document.getElementById("statResolved");
+
+  var STATUS_LABEL = { open: "Open", progress: "In progress", resolved: "Resolved" };
+  var STATUS_NEXT = { open: "progress", progress: "resolved", resolved: null };
+  var STATUS_NEXT_LABEL = { open: "Mark in progress", progress: "Mark resolved", resolved: null };
+
+  function fmtDate(d){
+    var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return months[d.getMonth()] + " " + d.getDate();
+  }
+
+  function render(){
+    var total = complaints.length;
+    var openC = complaints.filter(function(c){return c.status==="open";}).length;
+    var progC = complaints.filter(function(c){return c.status==="progress";}).length;
+    var resC = complaints.filter(function(c){return c.status==="resolved";}).length;
+    statTotal.textContent = total;
+    statOpen.textContent = openC;
+    statProgress.textContent = progC;
+    statResolved.textContent = resC;
+
+    var visible = complaints.filter(function(c){
+      if (activeFilter !== "all" && c.status !== activeFilter) return false;
+      if (searchTerm){
+        var hay = (c.title + " " + c.location + " " + c.desc + " " + c.category).toLowerCase();
+        if (hay.indexOf(searchTerm) === -1) return false;
+      }
+      return true;
+    }).sort(function(a,b){ return b.date - a.date; });
+
+    ticketsEl.innerHTML = "";
+    if (visible.length === 0){
+      var empty = document.createElement("div");
+      empty.className = "panel empty";
+      empty.textContent = "No reports match this view.";
+      ticketsEl.appendChild(empty);
+      return;
+    }
+
+    visible.forEach(function(c){
+      var el = document.createElement("div");
+      el.className = "ticket panel";
+
+      var nextStatus = STATUS_NEXT[c.status];
+      var nextLabel = STATUS_NEXT_LABEL[c.status];
+
+      el.innerHTML =
+        '<div class="stub"><span class="id">' + c.id + '</span></div>' +
+        '<div class="body">' +
+          '<div class="row1">' +
+            '<div>' +
+              '<h3>' + escapeHtml(c.title) + '</h3>' +
+              '<div class="meta"><span>' + escapeHtml(c.location) + '</span><span>' + fmtDate(c.date) + '</span></div>' +
+            '</div>' +
+            '<div class="stamp ' + c.status + '">' + STATUS_LABEL[c.status] + '</div>' +
+          '</div>' +
+          '<p class="desc">' + escapeHtml(c.desc) + '</p>' +
+          '<div class="tags">' +
+            '<span class="tag category">' + escapeHtml(c.category) + '</span>' +
+            '<span class="tag priority-' + c.priority + '">' + c.priority + ' priority</span>' +
+          '</div>' +
+          (nextStatus ?
+            '<button class="advance" data-id="' + c.id + '">' + nextLabel + '</button>' :
+            '<button class="advance" disabled>Closed out</button>'
+          ) +
+        '</div>';
+
+      ticketsEl.appendChild(el);
+    });
+  }
+
+  function escapeHtml(s){
+    var div = document.createElement("div");
+    div.textContent = s;
+    return div.innerHTML;
+  }
+
+  ticketsEl.addEventListener("click", function(e){
+    var btn = e.target.closest(".advance");
+    if (!btn || btn.disabled) return;
+    var id = btn.getAttribute("data-id");
+    var c = complaints.find(function(x){ return x.id === id; });
+    if (!c) return;
+    var next = STATUS_NEXT[c.status];
+    if (next){ c.status = next; render(); }
+  });
+
+  document.getElementById("filters").addEventListener("click", function(e){
+    var chip = e.target.closest(".chip");
+    if (!chip) return;
+    document.querySelectorAll(".chip").forEach(function(c){ c.classList.remove("active"); });
+    chip.classList.add("active");
+    activeFilter = chip.getAttribute("data-filter");
+    render();
+  });
+
+  document.getElementById("search").addEventListener("input", function(e){
+    searchTerm = e.target.value.trim().toLowerCase();
+    render();
+  });
+
+  // ---- live triage preview on the form ----
+  var titleInput = document.getElementById("f-title");
+  var descInput = document.getElementById("f-desc");
+  var preview = document.getElementById("triagePreview");
+  var previewCategory = document.getElementById("triageCategory");
+  var previewPriority = document.getElementById("triagePriority");
+
+  function updatePreview(){
+    var text = titleInput.value + " " + descInput.value;
+    if (text.trim().length < 4){ preview.classList.remove("show"); return; }
+    var t = triage(text);
+    previewCategory.textContent = t.category;
+    previewPriority.textContent = t.priority;
+    preview.classList.add("show");
+  }
+  titleInput.addEventListener("input", updatePreview);
+  descInput.addEventListener("input", updatePreview);
+
+  // ---- form submit ----
+  document.getElementById("complaintForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    var title = titleInput.value.trim();
+    var location = document.getElementById("f-location").value.trim();
+    var desc = descInput.value.trim();
+    if (!title || !location || !desc) return;
+
+    var t = triage(title + " " + desc);
+    complaints.push({
+      id: ticketId(),
+      title: title,
+      location: location,
+      desc: desc,
+      category: t.category,
+      priority: t.priority,
+      status: "open",
+      date: new Date()
+    });
+
+    this.reset();
+    preview.classList.remove("show");
+    activeFilter = "all";
+    document.querySelectorAll(".chip").forEach(function(c){ c.classList.remove("active"); });
+    document.querySelector('.chip[data-filter="all"]').classList.add("active");
+    render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
